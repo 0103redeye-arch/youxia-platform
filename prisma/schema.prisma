@@ -1,0 +1,375 @@
+// 遊俠平台 - 資料庫 Schema
+// 台灣本地服務媒合平台
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model User {
+  id            String   @id @default(cuid())
+  email         String?  @unique
+  phone         String?  @unique
+  name          String?
+  avatarUrl     String?
+  lineId        String?  @unique
+  googleId      String?  @unique
+  role          String   @default("CLIENT")
+  isVerified    Boolean  @default(false)
+  isActive      Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  accounts        Account[]
+  sessions        Session[]
+  tokens          UserToken[]
+  masterProfile   MasterProfile?
+  hall            Hall?
+  jobsAsClient    Job[]          @relation("ClientJobs")
+  quotesGiven     Quote[]        @relation("MasterQuotes")
+  reviewsGiven    Review[]       @relation("ReviewsGiven")
+  reviewsReceived Review[]       @relation("ReviewsReceived")
+  notifications   Notification[]
+
+  @@map("users")
+}
+
+model UserToken {
+  id        String   @id @default(cuid())
+  userId    String
+  token     String   @unique
+  createdAt DateTime @default(now())
+  expiresAt DateTime
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("user_tokens")
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@map("accounts")
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("sessions")
+}
+
+model MasterProfile {
+  id              String   @id @default(cuid())
+  userId          String   @unique
+  user            User     @relation(fields: [userId], references: [id])
+
+  displayName     String
+  bio             String?
+  idCardVerified  Boolean  @default(false)
+  // ── 實名驗證（個人）──
+  realName        String?           // 真實姓名
+  nationalIdHash  String?           // 身份證字號（SHA-256，不存明文）
+  nationalIdLast4 String?           // 後4碼，供客服比對
+  idVerifyStatus  String  @default("UNSUBMITTED") // UNSUBMITTED | PENDING | VERIFIED | REJECTED
+  idVerifyNote    String?           // 審核備註
+
+  serviceAreas    String   @default("[]")
+  youxiaLevel     Int      @default(1)
+  youxiaTitle     String   @default("初出茅廬")
+  avgRating       Float    @default(0)
+  totalReviews    Int      @default(0)
+  totalOrders     Int      @default(0)
+  completionRate  Float    @default(0)
+  isAvailable     Boolean  @default(true)
+  isLicensed      Boolean  @default(false)
+  licenseType     String?
+  licenseImageUrl String?
+
+  // 區域宗師名額（每月依 monthlyOrders 重新排序，各行政區前 3 名佔有名額）
+  districtChampion Boolean  @default(false)
+  championCity     String?
+  championDistrict String?
+  monthlyOrders    Int      @default(0)   // 每月底重置，用於區域宗師排序（與 Hall.monthlyOrders 同步重置）
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  achievements    MasterAchievement[]
+
+  @@map("master_profiles")
+}
+
+model ServiceIssue {
+  id              String   @id @default(cuid())
+  label           String
+  parentCategory  String
+  requiresLicense Boolean
+  licenseNote     String?
+  jobType         String
+  isActive        Boolean  @default(true)
+  sortOrder       Int      @default(0)
+
+  jobs            Job[]
+
+  @@map("service_issues")
+}
+
+model Job {
+  id            String   @id @default(cuid())
+  clientId      String
+  client        User         @relation("ClientJobs", fields: [clientId], references: [id])
+  issueId       String
+  issue         ServiceIssue @relation(fields: [issueId], references: [id])
+
+  title         String
+  description   String
+  photos        String   @default("[]")
+  address       String
+  district      String
+  city          String
+
+  urgency       String   @default("NORMAL")
+  preferredDate DateTime?
+  budgetMin     Int?
+  budgetMax     Int?
+  jobType       String
+  status        String   @default("OPEN")
+  quoteDeadline DateTime
+
+  quotes        Quote[]
+  order         Order?
+
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([city, status])
+  @@index([jobType, status])
+  @@map("jobs")
+}
+
+model Quote {
+  id             String   @id @default(cuid())
+  jobId          String
+  job            Job      @relation(fields: [jobId], references: [id])
+  masterId       String
+  master         User     @relation("MasterQuotes", fields: [masterId], references: [id])
+
+  price          Int
+  description    String
+  estimatedHours Float?
+  availableDate  DateTime
+  status         String   @default("PENDING")
+  isRead         Boolean  @default(false)
+
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  order          Order?
+
+  @@unique([jobId, masterId])
+  @@map("quotes")
+}
+
+model Order {
+  id           String   @id @default(cuid())
+  jobId        String   @unique
+  job          Job      @relation(fields: [jobId], references: [id])
+  quoteId      String   @unique
+  quote        Quote    @relation(fields: [quoteId], references: [id])
+
+  clientId     String
+  masterId     String
+  totalAmount  Int
+  platformFee  Int
+  feeRate      Float
+  masterPayout Int
+  status       String   @default("PENDING_PAYMENT")
+
+  scheduledAt      DateTime?
+  startedAt        DateTime?
+  completedAt      DateTime?
+  completionPhotos String   @default("[]")
+  clientConfirmed  Boolean  @default(false)
+  paymentProvider  String?
+  paymentTradeNo   String?
+  paidAt           DateTime?
+
+  reviews     Review[]
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("orders")
+}
+
+model Review {
+  id            String   @id @default(cuid())
+  orderId       String
+  order         Order    @relation(fields: [orderId], references: [id])
+  reviewerId    String
+  reviewer      User     @relation("ReviewsGiven", fields: [reviewerId], references: [id])
+  revieweeId    String
+  reviewee      User     @relation("ReviewsReceived", fields: [revieweeId], references: [id])
+  direction     String
+
+  overallRating     Int
+  qualityRating     Int?
+  punctualityRating Int?
+  attitudeRating    Int?
+  comment           String?
+  photos            String   @default("[]")
+
+  createdAt     DateTime @default(now())
+
+  @@unique([orderId, reviewerId])
+  @@map("reviews")
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  type      String
+  title     String
+  body      String
+  data      String?
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([userId, isRead])
+  @@map("notifications")
+}
+
+// ===== 成就系統 =====
+
+model AchievementDef {
+  id          String   @id @default(cuid())
+  name        String   @unique          // "初試啼聲"
+  description String                    // 完成第一個案件
+  icon        String                    // emoji or image key
+  rarity      Int      @default(1)      // 1~5 星
+  category    String?                   // 關聯服務分類（null = 通用）
+  requirement String                    // 條件說明（人讀）
+  isActive    Boolean  @default(true)
+
+  masterAchievements MasterAchievement[]
+
+  @@map("achievement_defs")
+}
+
+model MasterAchievement {
+  id            String         @id @default(cuid())
+  masterProfileId String
+  masterProfile MasterProfile  @relation(fields: [masterProfileId], references: [id])
+  achievementId String
+  achievement   AchievementDef @relation(fields: [achievementId], references: [id])
+  earnedAt      DateTime       @default(now())
+  note          String?        // 額外說明，如「第 50 件案件」
+
+  @@unique([masterProfileId, achievementId])
+  @@map("master_achievements")
+}
+
+// ===== 盟會（有執照公司）系統 =====
+
+model Hall {
+  id          String   @id @default(cuid())
+  ownerId     String   @unique
+  owner       User     @relation(fields: [ownerId], references: [id])
+
+  // ── 公司基本資料 ──
+  companyName       String            // 公司/行號全名
+  businessRegNo     String   @unique  // 統一編號（8碼）
+  phone             String?
+  address           String?
+  city              String
+  district          String
+
+  // ── 負責人 ──
+  representativeName   String          // 負責人姓名
+  representativeIdHash String?         // 負責人身份證 SHA-256
+  representativeIdLast4 String?        // 後4碼
+
+  // ── 執照 ──
+  licenses          String   @default("[]")  // JSON: [{type, number, expiryDate, imageUrl}]
+
+  // ── 服務資訊 ──
+  specialties       String   @default("[]")  // 擅長分類 JSON 陣列
+  serviceAreas      String   @default("[]")  // 服務縣市 JSON 陣列
+  description       String?
+
+  // ── 驗證狀態 ──
+  verifyStatus      String   @default("PENDING") // PENDING | VERIFIED | REJECTED
+  verifyNote        String?
+
+  // ── 評分統計 ──
+  avgRating         Float    @default(0)
+  totalOrders       Int      @default(0)
+  monthlyOrders     Int      @default(0)   // 月底重置
+
+  isActive          Boolean  @default(true)
+
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  members           HallMember[]
+
+  @@index([city, district, monthlyOrders])
+  @@map("halls")
+}
+
+// 盟會成員名冊（每位都要實名）
+model HallMember {
+  id            String   @id @default(cuid())
+  hallId        String
+  hall          Hall     @relation(fields: [hallId], references: [id])
+
+  realName      String              // 真實姓名
+  nationalIdHash  String?           // 身份證 SHA-256
+  nationalIdLast4 String?           // 後4碼
+  role          String              // 職稱，如「水電技師」「業務」
+  licenseTypes  String   @default("[]") // 持有執照 JSON 陣列
+  isActive      Boolean  @default(true)
+  joinedAt      DateTime @default(now())
+
+  // 用於互斥檢查：同一 nationalIdHash 不能同時是遊俠
+  @@index([nationalIdHash])
+  @@map("hall_members")
+}
+
+// ===== 區域廣告名額 =====
+
+model DistrictAd {
+  id            String   @id @default(cuid())
+  city          String
+  district      String
+  adType        String   // "MASTER_LV5" | "HALL_MONTHLY"
+  holderId      String   // masterProfileId or hallId
+  holderName    String
+  holderEmoji   String   @default("⚔️")
+  validFrom     DateTime @default(now())
+  validUntil    DateTime
+
+  @@index([city, district, adType])
+  @@map("district_ads")
+}
