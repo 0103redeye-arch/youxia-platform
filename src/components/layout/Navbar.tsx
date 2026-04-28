@@ -38,7 +38,7 @@ export default function Navbar() {
                 "px-3 py-1.5 rounded-md text-sm font-medium transition-colors",
                 pathname === href
                   ? "text-orange-600 bg-orange-50"
-                  : "text-slate-500 hover:text-slate-900 hover:bg-slate-50"
+                  : "text-slate-600 hover:text-slate-900 hover:bg-slate-50"
               )}
             >
               {label}
@@ -50,7 +50,7 @@ export default function Navbar() {
         <div className="flex items-center gap-2 shrink-0">
           <Link
             href="/login"
-            className="hidden md:block text-sm font-medium text-slate-500 hover:text-slate-900 px-3 py-1.5 transition-colors"
+            className="hidden md:block text-sm font-medium text-slate-700 hover:text-slate-900 px-3 py-1.5 transition-colors"
           >
             登入
           </Link>

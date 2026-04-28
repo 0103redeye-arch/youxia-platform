@@ -25,7 +25,7 @@ export default function BottomNav() {
                 <span className="w-12 h-12 rounded-2xl bg-orange-500 flex items-center justify-center shadow-lg shadow-orange-200">
                   <Icon className="w-5 h-5 text-white" strokeWidth={2.5} />
                 </span>
-                <span className="text-[10px] font-medium text-orange-500 mt-0.5">{label}</span>
+                <span className="text-xs font-semibold text-orange-500 mt-0.5">{label}</span>
               </Link>
             );
           }
@@ -35,11 +35,11 @@ export default function BottomNav() {
               href={href}
               className={cn(
                 "flex flex-col items-center gap-0.5 px-3 py-1 rounded-xl transition-colors",
-                active ? "text-orange-500" : "text-slate-400 hover:text-slate-600"
+                active ? "text-orange-500" : "text-slate-500 hover:text-slate-800"
               )}
             >
               <Icon className="w-5 h-5" strokeWidth={active ? 2.5 : 1.75} />
-              <span className={cn("text-[10px] font-medium", active && "font-semibold")}>{label}</span>
+              <span className={cn("text-xs", active ? "font-bold" : "font-medium")}>{label}</span>
             </Link>
           );
         })}
