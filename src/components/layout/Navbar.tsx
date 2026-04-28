@@ -1,40 +1,65 @@
 "use client";
 import Link from "next/link";
-import { Button } from "@/components/ui/button";
-import { Sword, Bell, Menu } from "lucide-react";
+import { usePathname } from "next/navigation";
+import { Sword } from "lucide-react";
+import { cn } from "@/lib/utils";
+
+const NAV_LINKS = [
+  { href: "/jobs",      label: "找遊俠" },
+  { href: "/post-job",  label: "發案" },
+  { href: "/dashboard", label: "我的" },
+];
 
 export default function Navbar() {
+  const pathname = usePathname();
+
   return (
-    <header className="sticky top-0 z-50 bg-white border-b border-gray-100 shadow-sm">
-      <div className="max-w-5xl mx-auto px-4 h-14 flex items-center justify-between">
+    <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-sm border-b border-slate-100">
+      <div className="max-w-5xl mx-auto px-5 h-14 flex items-center justify-between gap-4">
+
         {/* Logo */}
-        <Link href="/" className="flex items-center gap-2 font-bold text-brand-600 text-lg">
-          <Sword className="w-5 h-5" />
+        <Link
+          href="/"
+          className="flex items-center gap-2 text-slate-900 font-bold text-[15px] tracking-tight shrink-0"
+        >
+          <span className="w-7 h-7 rounded-lg bg-orange-500 flex items-center justify-center">
+            <Sword className="w-4 h-4 text-white" />
+          </span>
           俠客行不行
         </Link>
 
         {/* 桌機選單 */}
-        <nav className="hidden md:flex items-center gap-6 text-sm text-gray-600">
-          <Link href="/jobs" className="hover:text-brand-600">找遊俠</Link>
-          <Link href="/post-job" className="hover:text-brand-600">發案</Link>
-          <Link href="/dashboard" className="hover:text-brand-600">我的</Link>
+        <nav className="hidden md:flex items-center gap-1 flex-1 justify-center">
+          {NAV_LINKS.map(({ href, label }) => (
+            <Link
+              key={href}
+              href={href}
+              className={cn(
+                "px-3 py-1.5 rounded-md text-sm font-medium transition-colors",
+                pathname === href
+                  ? "text-orange-600 bg-orange-50"
+                  : "text-slate-500 hover:text-slate-900 hover:bg-slate-50"
+              )}
+            >
+              {label}
+            </Link>
+          ))}
         </nav>
 
-        {/* 右側按鈕 */}
-        <div className="flex items-center gap-2">
-          <Button variant="ghost" size="icon" className="hidden md:inline-flex">
-            <Bell className="w-4 h-4" />
-          </Button>
-          <Button asChild size="sm" className="hidden md:inline-flex">
-            <Link href="/post-job">立即發案</Link>
-          </Button>
-          <Button asChild variant="outline" size="sm" className="hidden md:inline-flex">
-            <Link href="/login">登入</Link>
-          </Button>
-          {/* 手機漢堡 */}
-          <Button variant="ghost" size="icon" className="md:hidden">
-            <Menu className="w-5 h-5" />
-          </Button>
+        {/* 右側 CTA */}
+        <div className="flex items-center gap-2 shrink-0">
+          <Link
+            href="/login"
+            className="hidden md:block text-sm font-medium text-slate-500 hover:text-slate-900 px-3 py-1.5 transition-colors"
+          >
+            登入
+          </Link>
+          <Link
+            href="/post-job"
+            className="text-sm font-semibold bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-lg transition-colors"
+          >
+            立即發案
+          </Link>
         </div>
       </div>
     </header>
