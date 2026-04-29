@@ -8,8 +8,8 @@ const items = [
   { href: "/",          icon: Home,            label: "首頁" },
   { href: "/jobs",      icon: Search,          label: "找遊俠" },
   { href: "/post-job",  icon: Plus,            label: "發案",  cta: true },
-  { href: "/dashboard", icon: LayoutDashboard, label: "我的" },
-  { href: "/profile",   icon: User,            label: "個人" },
+  { href: "/dashboard", icon: LayoutDashboard, label: "工作台" },
+  { href: "/become-master", icon: User,        label: "遊俠" },
 ];
 
 export default function BottomNav() {

@@ -63,15 +63,19 @@ export interface CreatePaymentParams {
   clientBackUrl: string; // 消費者取消時跳回的頁面
 }
 
+/** 台北時間格式化為 ECPay 要求的 "yyyy/MM/dd HH:mm:ss" */
+function formatTradeDate(): string {
+  // 使用 Asia/Taipei 時區，手動組裝避免 toLocaleString 平台差異
+  const now = new Date(new Date().toLocaleString("en-US", { timeZone: "Asia/Taipei" }));
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${now.getFullYear()}/${pad(now.getMonth() + 1)}/${pad(now.getDate())} ` +
+         `${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
+}
+
 /** 產生送往綠界的表單欄位 */
 export function buildPaymentForm(p: CreatePaymentParams) {
   const tradeNo = `YX${Date.now()}`.slice(0, 20);  // 綠界限 20 碼
-  const tradeDate = new Date().toLocaleString("zh-TW", {
-    timeZone: "Asia/Taipei",
-    year: "numeric", month: "2-digit", day: "2-digit",
-    hour: "2-digit", minute: "2-digit", second: "2-digit",
-    hour12: false,
-  }).replace(/\//g, "/").replace(",", "");  // "2024/04/28 14:30:00"
+  const tradeDate = formatTradeDate();
 
   const params: Record<string, string> = {
     MerchantID:        ECPAY_CONFIG.merchantId,

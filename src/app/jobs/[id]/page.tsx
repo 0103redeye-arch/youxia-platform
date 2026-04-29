@@ -8,6 +8,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { formatPrice, formatDate, timeAgo, hoursUntil } from "@/lib/utils";
+import { calculateFees } from "@/constants/fees";
+import type { YouxiaLevel } from "@/constants/fees";
 import { getYouxiaTitle } from "@/constants/fees";
 import { MapPin, Clock, Star, ShieldCheck, AlertTriangle } from "lucide-react";
 
@@ -59,19 +61,45 @@ export default async function JobDetailPage({ params }: { params: { id: string }
     if (!session?.user) redirect("/login");
 
     const quote = await prisma.quote.findUnique({
-      where: { id: quoteId }, include: { job: true },
+      where: { id: quoteId },
+      include: {
+        job: true,
+        master: { select: { id: true, masterProfile: { select: { youxiaLevel: true } } } },
+      },
     });
     if (!quote || quote.job.clientId !== session.user.id) return;
 
-    await prisma.$transaction([
+    // Prevent double-accept race condition
+    if (quote.status !== "PENDING") return;
+    if (!["OPEN", "QUOTED"].includes(quote.job.status)) return;
+
+    const youxiaLevel = (quote.master.masterProfile?.youxiaLevel ?? 1) as YouxiaLevel;
+    const { platformFee, masterPayout, feeRate } = calculateFees(quote.price, youxiaLevel);
+
+    // Accept quote + reject others + update job + CREATE ORDER in one transaction
+    const [, , , order] = await prisma.$transaction([
       prisma.quote.update({ where: { id: quoteId }, data: { status: "ACCEPTED" } }),
       prisma.quote.updateMany({
         where: { jobId: quote.jobId, id: { not: quoteId } },
         data: { status: "REJECTED" },
       }),
       prisma.job.update({ where: { id: quote.jobId }, data: { status: "ASSIGNED" } }),
+      prisma.order.create({
+        data: {
+          jobId:       quote.jobId,
+          quoteId:     quote.id,
+          clientId:    quote.job.clientId,
+          masterId:    quote.masterId,
+          totalAmount: quote.price,
+          platformFee,
+          feeRate,
+          masterPayout,
+          status:      "PENDING_PAYMENT",
+        },
+      }),
     ]);
-    redirect("/dashboard");
+
+    redirect(`/order/${order.id}`);
   }
 
   return (
