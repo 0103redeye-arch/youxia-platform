@@ -8,18 +8,34 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { formatPrice, timeAgo } from "@/lib/utils";
 import { getYouxiaTitle, getYouxiaLevel } from "@/constants/fees";
-import { Sword, Star, PlusCircle, Briefcase } from "lucide-react";
+import { Sword, Star, PlusCircle, Briefcase, ShoppingBag, AlertCircle } from "lucide-react";
 
-const STATUS_LABEL: Record<string, { label: string; variant: "default" | "secondary" | "success" | "warning" | "destructive" | "outline" }> = {
+const JOB_STATUS_LABEL: Record<string, { label: string; variant: "default" | "secondary" | "success" | "warning" | "destructive" | "outline" }> = {
   OPEN:            { label: "等待報價",   variant: "secondary" },
   QUOTED:          { label: "有報價了",   variant: "default" },
   ASSIGNED:        { label: "已選定遊俠", variant: "warning" },
   IN_PROGRESS:     { label: "施工中",     variant: "warning" },
-  PENDING_CONFIRM: { label: "等待確認完工", variant: "warning" },
+  PENDING_CONFIRM: { label: "等待確認",   variant: "warning" },
   COMPLETED:       { label: "已完成",     variant: "success" },
   CANCELLED:       { label: "已取消",     variant: "destructive" },
   EXPIRED:         { label: "已過期",     variant: "outline" },
 };
+
+const ORDER_STATUS_LABEL: Record<string, { label: string; variant: "default" | "secondary" | "success" | "warning" | "destructive" | "outline"; urgent?: boolean }> = {
+  PENDING_PAYMENT: { label: "⚡ 待付款",   variant: "destructive", urgent: true },
+  PAID:            { label: "已付款",       variant: "default" },
+  SCHEDULED:       { label: "已排程",       variant: "default" },
+  IN_PROGRESS:     { label: "施工中",       variant: "warning" },
+  PENDING_CONFIRM: { label: "待確認完工",   variant: "warning", urgent: true },
+  COMPLETED:       { label: "已完成",       variant: "success" },
+  DISPUTED:        { label: "申訴中",       variant: "destructive" },
+  REFUNDED:        { label: "已退款",       variant: "outline" },
+};
+
+// Active order statuses that need user attention
+const ACTIVE_ORDER_STATUSES = [
+  "PENDING_PAYMENT", "PAID", "SCHEDULED", "IN_PROGRESS", "PENDING_CONFIRM", "DISPUTED"
+];
 
 export default async function DashboardPage() {
   const session = await auth();
@@ -27,7 +43,7 @@ export default async function DashboardPage() {
 
   const userId = session.user.id!;
 
-  const [myJobs, myQuotes, profile] = await Promise.all([
+  const [myJobs, myQuotes, profile, activeOrders] = await Promise.all([
     prisma.job.findMany({
       where: { clientId: userId },
       include: { _count: { select: { quotes: true } } },
@@ -36,12 +52,30 @@ export default async function DashboardPage() {
     }),
     prisma.quote.findMany({
       where: { masterId: userId },
-      include: { job: true },
+      include: {
+        job: { select: { id: true, title: true, status: true } },
+        order: { select: { id: true } },
+      },
       orderBy: { createdAt: "desc" },
       take: 20,
     }),
     prisma.masterProfile.findUnique({ where: { userId } }),
+    prisma.order.findMany({
+      where: {
+        OR: [{ clientId: userId }, { masterId: userId }],
+        status: { in: ACTIVE_ORDER_STATUSES },
+      },
+      include: {
+        job: { select: { title: true } },
+      },
+      orderBy: { updatedAt: "desc" },
+      take: 10,
+    }),
   ]);
+
+  const hasUrgentOrders = activeOrders.some(
+    o => o.status === "PENDING_PAYMENT" || o.status === "PENDING_CONFIRM"
+  );
 
   return (
     <div className="min-h-screen pb-24 md:pb-0 bg-[#f8f9fa]">
@@ -64,13 +98,49 @@ export default async function DashboardPage() {
                   {profile.avgRating.toFixed(1)}
                 </span>
                 <span>{profile.totalOrders} 筆完成</span>
-                <span className="text-white/70">{getYouxiaLevel(profile.youxiaLevel).perks}</span>
+                <span className="text-white/70 hidden sm:inline">{getYouxiaLevel(profile.youxiaLevel).perks}</span>
               </div>
             </div>
           </div>
         )}
 
-        {/* 我發的案件 */}
+        {/* ── 進行中訂單（最重要，放最前面） ── */}
+        {activeOrders.length > 0 && (
+          <div>
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-bold text-slate-900 flex items-center gap-2">
+                <ShoppingBag className="w-5 h-5 text-slate-600" />
+                進行中訂單
+                {hasUrgentOrders && (
+                  <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
+                )}
+              </h2>
+            </div>
+            <div className="flex flex-col gap-3">
+              {activeOrders.map((order) => {
+                const s = ORDER_STATUS_LABEL[order.status] ?? { label: order.status, variant: "secondary" as const };
+                const isClient = order.clientId === userId;
+                return (
+                  <Link key={order.id} href={`/order/${order.id}`}>
+                    <div className={`bg-white rounded-2xl border transition-colors cursor-pointer p-5 flex items-center justify-between gap-4 ${
+                      s.urgent ? "border-orange-300 hover:border-orange-400" : "border-slate-200 hover:border-orange-300"
+                    }`}>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-semibold text-base text-slate-900 truncate mb-1">{order.job.title}</p>
+                        <p className="text-sm text-slate-600">
+                          {isClient ? "我是客戶" : "我是遊俠"} · {formatPrice(order.totalAmount)}
+                        </p>
+                      </div>
+                      <Badge variant={s.variant} className="text-sm px-3 py-1 shrink-0">{s.label}</Badge>
+                    </div>
+                  </Link>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* ── 我發的案件 ── */}
         <div>
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-lg font-bold text-slate-900 flex items-center gap-2">
@@ -93,7 +163,7 @@ export default async function DashboardPage() {
           ) : (
             <div className="flex flex-col gap-3">
               {myJobs.map((job) => {
-                const s = STATUS_LABEL[job.status] ?? { label: job.status, variant: "secondary" as const };
+                const s = JOB_STATUS_LABEL[job.status] ?? { label: job.status, variant: "secondary" as const };
                 return (
                   <Link key={job.id} href={`/jobs/${job.id}`}>
                     <div className="bg-white rounded-2xl border border-slate-200 hover:border-orange-300 transition-colors cursor-pointer p-5 flex items-center justify-between gap-4">
@@ -112,34 +182,41 @@ export default async function DashboardPage() {
           )}
         </div>
 
-        {/* 我的報價（遊俠視角） */}
+        {/* ── 我的報價（遊俠視角） ── */}
         {myQuotes.length > 0 && (
           <div>
             <h2 className="text-lg font-bold text-slate-900 mb-4 flex items-center gap-2">
               <Sword className="w-5 h-5 text-slate-600" />我的報價
             </h2>
             <div className="flex flex-col gap-3">
-              {myQuotes.map((q) => (
-                <Link key={q.id} href={`/jobs/${q.jobId}`}>
-                  <div className="bg-white rounded-2xl border border-slate-200 hover:border-orange-300 transition-colors cursor-pointer p-5 flex items-center justify-between gap-4">
-                    <div className="flex-1 min-w-0">
-                      <p className="font-semibold text-base text-slate-900 truncate mb-1">{q.job.title}</p>
-                      <p className="text-sm text-slate-600">
-                        {timeAgo(q.createdAt)} · 報價 {formatPrice(q.price)}
-                      </p>
+              {myQuotes.map((q) => {
+                // ACCEPTED quotes with an order → link directly to order
+                const href = q.status === "ACCEPTED" && q.order
+                  ? `/order/${q.order.id}`
+                  : `/jobs/${q.job.id}`;
+
+                return (
+                  <Link key={q.id} href={href}>
+                    <div className="bg-white rounded-2xl border border-slate-200 hover:border-orange-300 transition-colors cursor-pointer p-5 flex items-center justify-between gap-4">
+                      <div className="flex-1 min-w-0">
+                        <p className="font-semibold text-base text-slate-900 truncate mb-1">{q.job.title}</p>
+                        <p className="text-sm text-slate-600">
+                          {timeAgo(q.createdAt)} · 報價 {formatPrice(q.price)}
+                        </p>
+                      </div>
+                      <Badge
+                        variant={
+                          q.status === "ACCEPTED" ? "success" :
+                          q.status === "REJECTED" ? "destructive" : "secondary"
+                        }
+                        className="text-sm px-3 py-1 shrink-0"
+                      >
+                        {q.status === "ACCEPTED" ? "已接受" : q.status === "REJECTED" ? "未選中" : "等待中"}
+                      </Badge>
                     </div>
-                    <Badge
-                      variant={
-                        q.status === "ACCEPTED" ? "success" :
-                        q.status === "REJECTED" ? "destructive" : "secondary"
-                      }
-                      className="text-sm px-3 py-1 shrink-0"
-                    >
-                      {q.status === "ACCEPTED" ? "已接受" : q.status === "REJECTED" ? "未選中" : "等待中"}
-                    </Badge>
-                  </div>
-                </Link>
-              ))}
+                  </Link>
+                );
+              })}
             </div>
           </div>
         )}
@@ -155,6 +232,7 @@ export default async function DashboardPage() {
             </Button>
           </div>
         )}
+
       </div>
       <BottomNav />
     </div>
