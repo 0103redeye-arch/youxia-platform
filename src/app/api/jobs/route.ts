@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getAuthUser } from "@/lib/getAuthUser";
 import { sendSmsBatch } from "@/lib/sms";
+import { SERVICE_ISSUES } from "@/constants/issues";
 import { z } from "zod";
 
 const CreateJobSchema = z.object({
@@ -30,6 +31,25 @@ export async function POST(req: NextRequest) {
   }
 
   const data = parsed.data;
+
+  // ── 確保 ServiceIssue 記錄存在（防止 DB 未 seed 時外鍵錯誤）──
+  const issueDef = SERVICE_ISSUES.find(i => i.id === data.issueId);
+  if (!issueDef) {
+    return NextResponse.json({ error: "無效的問題類型" }, { status: 400 });
+  }
+  await prisma.serviceIssue.upsert({
+    where:  { id: issueDef.id },
+    update: {},
+    create: {
+      id:             issueDef.id,
+      label:          issueDef.label,
+      parentCategory: issueDef.parentCategory,
+      requiresLicense: issueDef.requiresLicense,
+      licenseNote:    issueDef.licenseNote ?? null,
+      jobType:        issueDef.requiresLicense ? "LICENSED" : "OPEN",
+    },
+  });
+
   const deadline = new Date(Date.now() + 48 * 60 * 60 * 1000);
 
   const job = await prisma.job.create({
