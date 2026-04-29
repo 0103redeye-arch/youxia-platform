@@ -1,30 +1,33 @@
+"use server";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Sword } from "lucide-react";
 import { signIn } from "@/lib/auth";
 
 export default function LoginPage() {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
-      <Card className="w-full max-w-sm">
-        <CardHeader className="text-center">
-          <div className="flex justify-center mb-2">
-            <div className="w-14 h-14 rounded-full bg-brand-500 flex items-center justify-center">
-              <Sword className="w-7 h-7 text-white" />
-            </div>
+    <div className="min-h-screen flex items-center justify-center bg-[#0c1220] px-6">
+      <div className="w-full max-w-sm bg-white rounded-3xl shadow-xl p-8">
+        {/* Logo */}
+        <div className="flex flex-col items-center mb-8">
+          <div className="w-16 h-16 rounded-2xl bg-orange-500 flex items-center justify-center mb-4">
+            <Sword className="w-8 h-8 text-white" />
           </div>
-          <CardTitle className="text-2xl">歡迎回來</CardTitle>
-          <p className="text-sm text-gray-500 mt-1">使用社群帳號登入俠客行</p>
-        </CardHeader>
-        <CardContent className="flex flex-col gap-3">
+          <h1 className="text-2xl font-black text-slate-900 tracking-tight">歡迎回來</h1>
+          <p className="text-base text-slate-600 mt-1">使用社群帳號登入俠客行</p>
+        </div>
+
+        <div className="flex flex-col gap-4">
           <form
             action={async () => {
               "use server";
               await signIn("line", { redirectTo: "/" });
             }}
           >
-            <Button className="w-full bg-[#00B900] hover:bg-[#00a000] text-white" type="submit">
-              <svg className="w-5 h-5 mr-2" viewBox="0 0 24 24" fill="currentColor">
+            <Button
+              className="w-full h-12 bg-[#00B900] hover:bg-[#00a000] text-white text-base font-semibold rounded-xl"
+              type="submit"
+            >
+              <svg className="w-5 h-5 mr-3" viewBox="0 0 24 24" fill="currentColor">
                 <path d="M19.365 9.863c.349 0 .63.285.63.631 0 .345-.281.63-.63.63H17.61v1.125h1.755c.349 0 .63.283.63.63 0 .344-.281.629-.63.629h-2.386c-.345 0-.627-.285-.627-.629V8.108c0-.345.282-.63.63-.63h2.386c.346 0 .627.285.627.63 0 .349-.281.63-.63.63H17.61v1.125h1.755zm-3.855 3.016c0 .27-.174.51-.432.596-.064.021-.133.031-.199.031-.211 0-.391-.09-.51-.25l-2.443-3.317v2.94c0 .344-.279.629-.631.629-.346 0-.626-.285-.626-.629V8.108c0-.27.173-.51.43-.595.06-.023.136-.033.194-.033.195 0 .375.104.495.254l2.462 3.33V8.108c0-.345.282-.63.63-.63.345 0 .63.285.63.63v4.771zm-5.741 0c0 .344-.282.629-.631.629-.345 0-.627-.285-.627-.629V8.108c0-.345.282-.63.63-.63.346 0 .628.285.628.63v4.771zm-2.466.629H4.917c-.345 0-.63-.285-.63-.629V8.108c0-.345.285-.63.63-.63.348 0 .63.285.63.63v4.141h1.756c.348 0 .629.283.629.63 0 .344-.281.629-.629.629M24 10.314C24 4.943 18.615.572 12 .572S0 4.943 0 10.314c0 4.811 4.27 8.842 10.035 9.608.391.082.923.258 1.058.59.12.301.079.766.038 1.08l-.164 1.02c-.045.301-.24 1.186 1.049.645 1.291-.539 6.916-4.078 9.436-6.975C23.176 14.393 24 12.458 24 10.314" />
               </svg>
               用 LINE 登入
@@ -37,8 +40,12 @@ export default function LoginPage() {
               await signIn("google", { redirectTo: "/" });
             }}
           >
-            <Button variant="outline" className="w-full" type="submit">
-              <svg className="w-5 h-5 mr-2" viewBox="0 0 24 24">
+            <Button
+              variant="outline"
+              className="w-full h-12 text-base font-semibold rounded-xl border-slate-200 text-slate-800 hover:bg-slate-50"
+              type="submit"
+            >
+              <svg className="w-5 h-5 mr-3" viewBox="0 0 24 24">
                 <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
                 <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
                 <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" />
@@ -47,12 +54,12 @@ export default function LoginPage() {
               用 Google 登入
             </Button>
           </form>
+        </div>
 
-          <p className="text-xs text-gray-400 text-center mt-2">
-            登入即同意本平台的服務條款與隱私政策
-          </p>
-        </CardContent>
-      </Card>
+        <p className="text-sm text-slate-500 text-center mt-6">
+          登入即同意本平台的服務條款與隱私政策
+        </p>
+      </div>
     </div>
   );
 }

@@ -4,7 +4,6 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import Navbar from "@/components/layout/Navbar";
 import BottomNav from "@/components/layout/BottomNav";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { formatPrice, timeAgo } from "@/lib/utils";
@@ -12,14 +11,14 @@ import { getYouxiaTitle, getYouxiaLevel } from "@/constants/fees";
 import { Sword, Star, PlusCircle, Briefcase } from "lucide-react";
 
 const STATUS_LABEL: Record<string, { label: string; variant: "default" | "secondary" | "success" | "warning" | "destructive" | "outline" }> = {
-  OPEN:            { label: "等待報價", variant: "secondary" },
-  QUOTED:          { label: "有報價了", variant: "default" },
+  OPEN:            { label: "等待報價",   variant: "secondary" },
+  QUOTED:          { label: "有報價了",   variant: "default" },
   ASSIGNED:        { label: "已選定遊俠", variant: "warning" },
-  IN_PROGRESS:     { label: "施工中", variant: "warning" },
+  IN_PROGRESS:     { label: "施工中",     variant: "warning" },
   PENDING_CONFIRM: { label: "等待確認完工", variant: "warning" },
-  COMPLETED:       { label: "已完成", variant: "success" },
-  CANCELLED:       { label: "已取消", variant: "destructive" },
-  EXPIRED:         { label: "已過期", variant: "outline" },
+  COMPLETED:       { label: "已完成",     variant: "success" },
+  CANCELLED:       { label: "已取消",     variant: "destructive" },
+  EXPIRED:         { label: "已過期",     variant: "outline" },
 };
 
 export default async function DashboardPage() {
@@ -45,108 +44,116 @@ export default async function DashboardPage() {
   ]);
 
   return (
-    <div className="min-h-screen pb-20 md:pb-0">
+    <div className="min-h-screen pb-24 md:pb-0 bg-[#f8f9fa]">
       <Navbar />
-      <div className="max-w-2xl mx-auto px-4 py-6 flex flex-col gap-6">
-        <h1 className="text-xl font-bold">我的主頁</h1>
+      <div className="max-w-2xl mx-auto px-5 py-10 flex flex-col gap-8">
+        <h1 className="text-2xl font-bold text-slate-900">我的主頁</h1>
 
-        {/* 遊俠資訊卡（若已成為遊俠） */}
+        {/* 遊俠資訊卡 */}
         {profile && (
-          <Card className="bg-gradient-to-r from-brand-500 to-brand-700 text-white">
-            <CardContent className="p-5 flex items-center gap-4">
-              <div className="w-14 h-14 rounded-full bg-white/20 flex items-center justify-center">
-                <Sword className="w-7 h-7" />
+          <div className="bg-gradient-to-r from-orange-500 to-orange-600 rounded-2xl text-white p-6 flex items-center gap-5 shadow-lg shadow-orange-200">
+            <div className="w-16 h-16 rounded-2xl bg-white/20 flex items-center justify-center shrink-0">
+              <Sword className="w-8 h-8 text-white" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="font-bold text-xl mb-0.5">{profile.displayName}</p>
+              <p className="text-orange-100 text-base">{getYouxiaTitle(profile.youxiaLevel)} · Lv.{profile.youxiaLevel}</p>
+              <div className="flex items-center gap-4 mt-2 text-sm text-white/90">
+                <span className="flex items-center gap-1.5">
+                  <Star className="w-4 h-4 fill-yellow-300 text-yellow-300" />
+                  {profile.avgRating.toFixed(1)}
+                </span>
+                <span>{profile.totalOrders} 筆完成</span>
+                <span className="text-white/70">{getYouxiaLevel(profile.youxiaLevel).perks}</span>
               </div>
-              <div className="flex-1">
-                <p className="font-bold text-lg">{profile.displayName}</p>
-                <p className="text-brand-100 text-sm">{getYouxiaTitle(profile.youxiaLevel)} · Lv.{profile.youxiaLevel}</p>
-                <div className="flex items-center gap-3 mt-1 text-sm">
-                  <span className="flex items-center gap-1"><Star className="w-4 h-4 fill-yellow-300 text-yellow-300" />{profile.avgRating.toFixed(1)}</span>
-                  <span>{profile.totalOrders} 筆完成</span>
-                  <span className="text-brand-200 opacity-80">{getYouxiaLevel(profile.youxiaLevel).perks}</span>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+            </div>
+          </div>
         )}
 
         {/* 我發的案件 */}
         <div>
-          <div className="flex items-center justify-between mb-3">
-            <h2 className="font-semibold text-gray-800 flex items-center gap-2">
-              <Briefcase className="w-4 h-4" />我發的案件
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-bold text-slate-900 flex items-center gap-2">
+              <Briefcase className="w-5 h-5 text-slate-600" />我發的案件
             </h2>
-            <Button asChild size="sm" variant="outline">
-              <Link href="/post-job"><PlusCircle className="w-4 h-4 mr-1" />發新案</Link>
+            <Button asChild size="sm" variant="outline" className="text-sm font-semibold h-9 rounded-lg px-4">
+              <Link href="/post-job">
+                <PlusCircle className="w-4 h-4 mr-1.5" />發新案
+              </Link>
             </Button>
           </div>
-          {myJobs.length === 0 && (
-            <Card>
-              <CardContent className="py-8 text-center">
-                <p className="text-gray-400 mb-3">還沒有發過案件</p>
-                <Button asChild><Link href="/post-job">立即發案</Link></Button>
-              </CardContent>
-            </Card>
-          )}
-          <div className="flex flex-col gap-2">
-            {myJobs.map((job) => {
-              const s = STATUS_LABEL[job.status] ?? { label: job.status, variant: "secondary" as const };
-              return (
-                <Link key={job.id} href={`/jobs/${job.id}`}>
-                  <Card className="hover:border-brand-300 transition-colors cursor-pointer">
-                    <CardContent className="p-4 flex items-center justify-between gap-3">
+
+          {myJobs.length === 0 ? (
+            <div className="bg-white rounded-2xl border border-slate-200 py-10 text-center px-6">
+              <p className="text-slate-600 text-base mb-4">還沒有發過案件</p>
+              <Button asChild className="h-11 px-6 text-base font-semibold rounded-xl">
+                <Link href="/post-job">立即發案</Link>
+              </Button>
+            </div>
+          ) : (
+            <div className="flex flex-col gap-3">
+              {myJobs.map((job) => {
+                const s = STATUS_LABEL[job.status] ?? { label: job.status, variant: "secondary" as const };
+                return (
+                  <Link key={job.id} href={`/jobs/${job.id}`}>
+                    <div className="bg-white rounded-2xl border border-slate-200 hover:border-orange-300 transition-colors cursor-pointer p-5 flex items-center justify-between gap-4">
                       <div className="flex-1 min-w-0">
-                        <p className="font-medium text-sm truncate">{job.title}</p>
-                        <p className="text-xs text-gray-400">{timeAgo(job.createdAt)} · {job._count.quotes} 個報價</p>
+                        <p className="font-semibold text-base text-slate-900 truncate mb-1">{job.title}</p>
+                        <p className="text-sm text-slate-600">
+                          {timeAgo(job.createdAt)} · {job._count.quotes} 個報價
+                        </p>
                       </div>
-                      <Badge variant={s.variant}>{s.label}</Badge>
-                    </CardContent>
-                  </Card>
-                </Link>
-              );
-            })}
-          </div>
+                      <Badge variant={s.variant} className="text-sm px-3 py-1 shrink-0">{s.label}</Badge>
+                    </div>
+                  </Link>
+                );
+              })}
+            </div>
+          )}
         </div>
 
         {/* 我的報價（遊俠視角） */}
         {myQuotes.length > 0 && (
           <div>
-            <h2 className="font-semibold text-gray-800 mb-3 flex items-center gap-2">
-              <Sword className="w-4 h-4" />我的報價
+            <h2 className="text-lg font-bold text-slate-900 mb-4 flex items-center gap-2">
+              <Sword className="w-5 h-5 text-slate-600" />我的報價
             </h2>
-            <div className="flex flex-col gap-2">
+            <div className="flex flex-col gap-3">
               {myQuotes.map((q) => (
                 <Link key={q.id} href={`/jobs/${q.jobId}`}>
-                  <Card className="hover:border-brand-300 transition-colors cursor-pointer">
-                    <CardContent className="p-4 flex items-center justify-between gap-3">
-                      <div className="flex-1 min-w-0">
-                        <p className="font-medium text-sm truncate">{q.job.title}</p>
-                        <p className="text-xs text-gray-400">{timeAgo(q.createdAt)} · 報價 {formatPrice(q.price)}</p>
-                      </div>
-                      <Badge variant={
+                  <div className="bg-white rounded-2xl border border-slate-200 hover:border-orange-300 transition-colors cursor-pointer p-5 flex items-center justify-between gap-4">
+                    <div className="flex-1 min-w-0">
+                      <p className="font-semibold text-base text-slate-900 truncate mb-1">{q.job.title}</p>
+                      <p className="text-sm text-slate-600">
+                        {timeAgo(q.createdAt)} · 報價 {formatPrice(q.price)}
+                      </p>
+                    </div>
+                    <Badge
+                      variant={
                         q.status === "ACCEPTED" ? "success" :
                         q.status === "REJECTED" ? "destructive" : "secondary"
-                      }>
-                        {q.status === "ACCEPTED" ? "已接受" : q.status === "REJECTED" ? "未選中" : "等待中"}
-                      </Badge>
-                    </CardContent>
-                  </Card>
+                      }
+                      className="text-sm px-3 py-1 shrink-0"
+                    >
+                      {q.status === "ACCEPTED" ? "已接受" : q.status === "REJECTED" ? "未選中" : "等待中"}
+                    </Badge>
+                  </div>
                 </Link>
               ))}
             </div>
           </div>
         )}
 
-        {/* 如果還不是遊俠 */}
+        {/* 成為遊俠 CTA */}
         {!profile && (
-          <Card className="border-brand-200 bg-brand-50">
-            <CardContent className="p-5 text-center">
-              <Sword className="w-10 h-10 text-brand-500 mx-auto mb-2" />
-              <p className="font-semibold text-brand-700 mb-1">踏入江湖，成為遊俠</p>
-              <p className="text-sm text-brand-600 mb-3">用真本事接案、累積聲望，等級越高享有越多特權。</p>
-              <Button asChild><Link href="/become-master">加入遊俠</Link></Button>
-            </CardContent>
-          </Card>
+          <div className="bg-orange-50 rounded-2xl border border-orange-200 p-7 text-center">
+            <Sword className="w-12 h-12 text-orange-500 mx-auto mb-3" />
+            <p className="font-bold text-orange-800 text-lg mb-2">踏入江湖，成為遊俠</p>
+            <p className="text-base text-orange-700 mb-5">用真本事接案、累積聲望，等級越高享有越多特權。</p>
+            <Button asChild className="h-11 px-6 text-base font-semibold rounded-xl">
+              <Link href="/become-master">加入遊俠</Link>
+            </Button>
+          </div>
         )}
       </div>
       <BottomNav />

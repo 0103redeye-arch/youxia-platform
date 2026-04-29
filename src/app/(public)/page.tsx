@@ -48,31 +48,31 @@ export default function HomePage() {
 
       {/* ── Hero ── */}
       <section className="bg-[#0c1220] text-white">
-        <div className="max-w-5xl mx-auto px-5 py-16 md:py-24 flex flex-col md:flex-row items-center gap-10">
+        <div className="max-w-5xl mx-auto px-6 py-20 md:py-28 flex flex-col md:flex-row items-center gap-12">
           {/* 文字 */}
           <div className="flex-1 min-w-0">
-            <div className="inline-flex items-center gap-2 text-xs font-semibold text-orange-400 bg-orange-400/10 border border-orange-400/20 px-3 py-1.5 rounded-full mb-5 tracking-wide uppercase">
+            <div className="inline-flex items-center gap-2 text-sm font-semibold text-orange-400 bg-orange-400/10 border border-orange-400/20 px-4 py-2 rounded-full mb-6 tracking-wide uppercase">
               台灣在地服務媒合
             </div>
-            <h1 className="text-4xl md:text-5xl font-black leading-tight tracking-tighter mb-5">
+            <h1 className="text-4xl md:text-5xl font-black leading-tight tracking-tighter mb-6">
               找師傅、接委託<br />
               <span className="text-orange-400">一鍵搞定</span>
             </h1>
-            <p className="text-slate-200 text-base md:text-lg leading-relaxed mb-8 max-w-md">
+            <p className="text-slate-200 text-lg md:text-xl leading-relaxed mb-9 max-w-md">
               水電・冷氣・開鎖・油漆，或任何奇怪委託。<br className="hidden md:block" />
               免費發案，多家遊俠報價，選最合適的人。
             </p>
-            <div className="flex gap-3 flex-wrap">
+            <div className="flex gap-4 flex-wrap">
               <Link
                 href="/post-job"
-                className="inline-flex items-center gap-2 bg-orange-500 hover:bg-orange-600 text-white font-semibold px-6 py-3 rounded-xl transition-colors text-sm"
+                className="inline-flex items-center gap-2 bg-orange-500 hover:bg-orange-600 text-white font-semibold px-7 py-3.5 rounded-xl transition-colors text-base"
               >
                 立即免費發案
-                <ArrowRight className="w-4 h-4" />
+                <ArrowRight className="w-5 h-5" />
               </Link>
               <Link
                 href="/jobs"
-                className="inline-flex items-center gap-2 bg-white/8 hover:bg-white/12 text-slate-200 font-medium px-6 py-3 rounded-xl border border-white/10 transition-colors text-sm"
+                className="inline-flex items-center gap-2 bg-white/8 hover:bg-white/12 text-slate-100 font-medium px-7 py-3.5 rounded-xl border border-white/15 transition-colors text-base"
               >
                 瀏覽委託列表
               </Link>
@@ -80,10 +80,10 @@ export default function HomePage() {
           </div>
 
           {/* Stats */}
-          <div className="grid grid-cols-2 gap-3 w-full md:w-64 shrink-0">
+          <div className="grid grid-cols-2 gap-4 w-full md:w-72 shrink-0">
             {STATS.map(({ value, label }) => (
-              <div key={label} className="bg-white/5 border border-white/8 rounded-2xl p-4 text-center">
-                <div className="text-2xl font-black text-white mb-0.5">{value}</div>
+              <div key={label} className="bg-white/5 border border-white/10 rounded-2xl p-5 text-center">
+                <div className="text-3xl font-black text-white mb-1">{value}</div>
                 <div className="text-sm text-slate-200 leading-tight">{label}</div>
               </div>
             ))}
@@ -92,15 +92,15 @@ export default function HomePage() {
       </section>
 
       {/* ── 服務分類 ── */}
-      <section className="max-w-5xl mx-auto px-5 py-12">
-        <div className="flex items-baseline justify-between mb-6">
-          <h2 className="text-xl font-bold text-slate-900 tracking-tight">選擇你需要的服務</h2>
-          <Link href="/post-job" className="text-sm text-orange-500 hover:text-orange-600 font-semibold flex items-center gap-1">
-            全部分類 <ArrowRight className="w-3.5 h-3.5" />
+      <section className="max-w-5xl mx-auto px-6 py-16">
+        <div className="flex items-baseline justify-between mb-8">
+          <h2 className="text-2xl font-bold text-slate-900 tracking-tight">選擇你需要的服務</h2>
+          <Link href="/post-job" className="text-base text-orange-500 hover:text-orange-600 font-semibold flex items-center gap-1">
+            全部分類 <ArrowRight className="w-4 h-4" />
           </Link>
         </div>
 
-        <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2.5">
+        <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-3">
           {mainCategories.map((cat) => {
             const meta = CATEGORY_META[cat] ?? { icon: Wrench, color: "text-slate-600", bg: "bg-slate-100" };
             const Icon = meta.icon;
@@ -109,14 +109,14 @@ export default function HomePage() {
               <Link
                 key={cat}
                 href={`/post-job?category=${encodeURIComponent(cat)}`}
-                className="group flex flex-col items-center gap-2.5 p-4 bg-white rounded-2xl border border-slate-100 hover:border-orange-200 hover:shadow-sm hover:-translate-y-0.5 transition-all duration-200 text-center"
+                className="group flex flex-col items-center gap-3 p-5 bg-white rounded-2xl border border-slate-100 hover:border-orange-200 hover:shadow-sm hover:-translate-y-0.5 transition-all duration-200 text-center"
               >
-                <div className={`w-11 h-11 rounded-xl ${meta.bg} flex items-center justify-center group-hover:scale-105 transition-transform`}>
-                  <Icon className={`w-5 h-5 ${meta.color}`} />
+                <div className={`w-13 h-13 w-12 h-12 rounded-xl ${meta.bg} flex items-center justify-center group-hover:scale-105 transition-transform`}>
+                  <Icon className={`w-6 h-6 ${meta.color}`} />
                 </div>
                 <div>
-                  <div className="text-xs font-bold text-slate-800 leading-tight mb-0.5">{cat}</div>
-                  <div className="text-xs text-slate-600">{count} 種問題</div>
+                  <div className="text-sm font-bold text-slate-800 leading-tight mb-1">{cat}</div>
+                  <div className="text-sm text-slate-600">{count} 種問題</div>
                 </div>
               </Link>
             );
@@ -125,33 +125,33 @@ export default function HomePage() {
           {/* 奇特委託 */}
           <Link
             href="/post-job?category=%E5%A5%87%E7%89%B9%E5%A7%94%E8%A8%97"
-            className="group flex flex-col items-center gap-2.5 p-4 bg-amber-50 rounded-2xl border border-amber-100 hover:border-amber-300 hover:shadow-sm hover:-translate-y-0.5 transition-all duration-200 text-center"
+            className="group flex flex-col items-center gap-3 p-5 bg-amber-50 rounded-2xl border border-amber-100 hover:border-amber-300 hover:shadow-sm hover:-translate-y-0.5 transition-all duration-200 text-center"
           >
-            <div className="w-11 h-11 rounded-xl bg-amber-100 flex items-center justify-center group-hover:scale-105 transition-transform">
-              <Bug className="w-5 h-5 text-amber-600" />
+            <div className="w-12 h-12 rounded-xl bg-amber-100 flex items-center justify-center group-hover:scale-105 transition-transform">
+              <Bug className="w-6 h-6 text-amber-600" />
             </div>
             <div>
-              <div className="text-xs font-bold text-amber-700 leading-tight mb-0.5">奇特委託</div>
-              <div className="text-xs text-amber-600">自由發案</div>
+              <div className="text-sm font-bold text-amber-700 leading-tight mb-1">奇特委託</div>
+              <div className="text-sm text-amber-600">自由發案</div>
             </div>
           </Link>
         </div>
       </section>
 
       {/* ── 流程 ── */}
-      <section className="bg-white border-y border-slate-100 py-14 px-5">
+      <section className="bg-white border-y border-slate-100 py-18 px-6 py-16">
         <div className="max-w-4xl mx-auto">
-          <h2 className="text-xl font-bold text-slate-900 tracking-tight text-center mb-10">四步完成，快速搞定</h2>
+          <h2 className="text-2xl font-bold text-slate-900 tracking-tight text-center mb-12">四步完成，快速搞定</h2>
           <div className="grid md:grid-cols-4 gap-0 relative">
             {/* 連接線 */}
-            <div className="hidden md:block absolute top-6 left-[12.5%] right-[12.5%] h-px bg-slate-100 z-0" />
+            <div className="hidden md:block absolute top-7 left-[12.5%] right-[12.5%] h-px bg-slate-200 z-0" />
 
             {STEPS.map(({ n, title, desc }) => (
-              <div key={n} className="relative z-10 flex flex-col items-center text-center px-4 mb-8 md:mb-0">
-                <div className="w-12 h-12 rounded-2xl bg-slate-900 text-white font-black text-lg flex items-center justify-center mb-4 shadow-sm">
+              <div key={n} className="relative z-10 flex flex-col items-center text-center px-5 mb-10 md:mb-0">
+                <div className="w-14 h-14 rounded-2xl bg-slate-900 text-white font-black text-xl flex items-center justify-center mb-5 shadow-sm">
                   {n}
                 </div>
-                <div className="font-bold text-slate-900 text-base mb-1.5">{title}</div>
+                <div className="font-bold text-slate-900 text-base mb-2">{title}</div>
                 <p className="text-sm text-slate-700 leading-relaxed">{desc}</p>
               </div>
             ))}
@@ -160,13 +160,13 @@ export default function HomePage() {
       </section>
 
       {/* ── 信任 ── */}
-      <section className="max-w-4xl mx-auto px-5 py-14">
-        <h2 className="text-xl font-bold text-slate-900 tracking-tight text-center mb-8">為什麼選擇俠客行不行？</h2>
-        <div className="grid md:grid-cols-3 gap-4">
+      <section className="max-w-4xl mx-auto px-6 py-16">
+        <h2 className="text-2xl font-bold text-slate-900 tracking-tight text-center mb-10">為什麼選擇俠客行不行？</h2>
+        <div className="grid md:grid-cols-3 gap-5">
           {TRUST.map(({ icon: Icon, title, desc }) => (
-            <div key={title} className="bg-white rounded-2xl border border-slate-100 p-6 hover:shadow-sm transition-shadow">
-              <div className="w-10 h-10 rounded-xl bg-orange-50 flex items-center justify-center mb-4">
-                <Icon className="w-5 h-5 text-orange-500" />
+            <div key={title} className="bg-white rounded-2xl border border-slate-100 p-7 hover:shadow-sm transition-shadow">
+              <div className="w-12 h-12 rounded-xl bg-orange-50 flex items-center justify-center mb-5">
+                <Icon className="w-6 h-6 text-orange-500" />
               </div>
               <h3 className="font-bold text-slate-900 text-base mb-2">{title}</h3>
               <p className="text-sm text-slate-700 leading-relaxed">{desc}</p>
@@ -176,18 +176,18 @@ export default function HomePage() {
       </section>
 
       {/* ── CTA 底部 ── */}
-      <section className="bg-[#0c1220] py-14 px-5">
+      <section className="bg-[#0c1220] py-16 px-6">
         <div className="max-w-xl mx-auto text-center">
-          <h2 className="text-2xl font-black text-white tracking-tighter mb-3">
+          <h2 className="text-3xl font-black text-white tracking-tighter mb-4">
             有問題？<span className="text-orange-400">一鍵找遊俠</span>
           </h2>
-          <p className="text-slate-200 text-base mb-7">免費發案，不限種類，最快 2 小時內有師傅回應。</p>
+          <p className="text-slate-200 text-base mb-8">免費發案，不限種類，最快 2 小時內有師傅回應。</p>
           <Link
             href="/post-job"
-            className="inline-flex items-center gap-2 bg-orange-500 hover:bg-orange-600 text-white font-semibold px-8 py-3.5 rounded-xl transition-colors"
+            className="inline-flex items-center gap-2 bg-orange-500 hover:bg-orange-600 text-white font-semibold px-9 py-4 rounded-xl transition-colors text-base"
           >
             立即免費發案
-            <ArrowRight className="w-4 h-4" />
+            <ArrowRight className="w-5 h-5" />
           </Link>
         </div>
       </section>
