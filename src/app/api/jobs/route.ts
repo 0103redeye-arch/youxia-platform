@@ -110,7 +110,7 @@ async function notifyNearbyMasters(params: {
       message: `【俠客行不行】新案件來了！\n` +
                `📋 ${safeTitle}\n` +
                `📍 ${location}${budgetNote}\n` +
-               `👉 立即報價：${appUrl}/job/${jobId}`,
+               `👉 立即報價：${appUrl}/jobs/${jobId}`,
     }));
 
   console.log(`[SMS] 通知 ${recipients.length} 位師傅（共 ${targets.length} 位在冊）`);

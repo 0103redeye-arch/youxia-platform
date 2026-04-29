@@ -42,6 +42,14 @@ export async function POST(req: NextRequest) {
   const direction = order.clientId === user.id ? "CLIENT_TO_MASTER" : "MASTER_TO_CLIENT";
   const revieweeId = direction === "CLIENT_TO_MASTER" ? order.masterId : order.clientId;
 
+  // 檢查是否已評過（@@unique([orderId, reviewerId])），回傳友善訊息
+  const existing = await prisma.review.findUnique({
+    where: { orderId_reviewerId: { orderId, reviewerId: user.id } },
+  });
+  if (existing) {
+    return NextResponse.json({ error: "你已對此訂單評過分" }, { status: 409 });
+  }
+
   const review = await prisma.review.create({
     data: {
       orderId,

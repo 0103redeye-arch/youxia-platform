@@ -1,6 +1,6 @@
 "use client";
 import { Suspense, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -30,7 +30,6 @@ export default function PostJobPage() {
 }
 
 function PostJobInner() {
-  const router = useRouter();
   const searchParams = useSearchParams();
   const initCategory = searchParams.get("category") ?? "";
 

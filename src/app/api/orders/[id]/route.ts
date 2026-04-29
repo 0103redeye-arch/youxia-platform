@@ -106,10 +106,13 @@ export async function PATCH(
           where: { id: order.jobId },
           data: { status: "COMPLETED" },
         }),
-        // 累計師傅接案數
+        // 累計師傅接案數（totalOrders = 累計；monthlyOrders = 月度，用於區域宗師排名）
         prisma.masterProfile.updateMany({
           where: { userId: order.masterId },
-          data: { totalOrders: { increment: 1 } },
+          data: {
+            totalOrders:   { increment: 1 },
+            monthlyOrders: { increment: 1 },
+          },
         }),
       ]);
       break;

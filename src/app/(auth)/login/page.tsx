@@ -1,4 +1,3 @@
-"use server";
 import { Button } from "@/components/ui/button";
 import { Sword } from "lucide-react";
 import { signIn } from "@/lib/auth";

@@ -3,7 +3,7 @@ import Navbar from "@/components/layout/Navbar";
 import BottomNav from "@/components/layout/BottomNav";
 import { ISSUE_CATEGORIES, SERVICE_ISSUES } from "@/constants/issues";
 import {
-  Wrench, Zap, Wind, Lock, Brush, Bug,
+  Wrench, Zap, Lock, Brush, Bug,
   Star, ShieldCheck, TrendingUp, ArrowRight,
   Droplets, Flame, Airplay, Scissors,
 } from "lucide-react";
@@ -111,7 +111,7 @@ export default function HomePage() {
                 href={`/post-job?category=${encodeURIComponent(cat)}`}
                 className="group flex flex-col items-center gap-3 p-5 bg-white rounded-2xl border border-slate-100 hover:border-orange-200 hover:shadow-sm hover:-translate-y-0.5 transition-all duration-200 text-center"
               >
-                <div className={`w-13 h-13 w-12 h-12 rounded-xl ${meta.bg} flex items-center justify-center group-hover:scale-105 transition-transform`}>
+                <div className={`w-12 h-12 rounded-xl ${meta.bg} flex items-center justify-center group-hover:scale-105 transition-transform`}>
                   <Icon className={`w-6 h-6 ${meta.color}`} />
                 </div>
                 <div>
@@ -139,7 +139,7 @@ export default function HomePage() {
       </section>
 
       {/* ── 流程 ── */}
-      <section className="bg-white border-y border-slate-100 py-18 px-6 py-16">
+      <section className="bg-white border-y border-slate-100 py-16 px-6">
         <div className="max-w-4xl mx-auto">
           <h2 className="text-2xl font-bold text-slate-900 tracking-tight text-center mb-12">四步完成，快速搞定</h2>
           <div className="grid md:grid-cols-4 gap-0 relative">

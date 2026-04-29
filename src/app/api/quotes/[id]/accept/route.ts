@@ -35,6 +35,11 @@ export async function POST(
     return NextResponse.json({ error: "無權限" }, { status: 403 });
   }
 
+  // 報價必須仍處於 PENDING 狀態（防止同一報價被雙重接受）
+  if (quote.status !== "PENDING") {
+    return NextResponse.json({ error: "此報價已被處理" }, { status: 400 });
+  }
+
   // OPEN 和 QUOTED 都可接受報價；ASSIGNED 以後才真正結案
   if (!["OPEN", "QUOTED"].includes(quote.job.status)) {
     return NextResponse.json({ error: "此案件已結案" }, { status: 400 });

@@ -1,30 +1,49 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
-const ALLOWED_ORIGINS = [
+// 允許跨域的來源（Expo App dev 環境）
+const STATIC_ALLOWED = [
   "http://localhost:8081",
   "http://10.20.10.24:8081",
-  // 如需允許其他 IP，在此新增
 ];
 
+function getAllowedOrigins(): string[] {
+  const origins = [...STATIC_ALLOWED];
+  // 加入生產環境 URL（若有設定）
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL;
+  if (appUrl && !origins.includes(appUrl)) origins.push(appUrl);
+  return origins;
+}
+
 export function middleware(request: NextRequest) {
-  // Let NextAuth handle its own auth routes
+  // NextAuth 自行處理 /api/auth/* 不加 CORS
   if (request.nextUrl.pathname.startsWith("/api/auth")) {
     return NextResponse.next();
   }
 
   const origin = request.headers.get("origin") ?? "";
-  const allowOrigin = ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0];
+  const allowedOrigins = getAllowedOrigins();
+
+  // 同源請求（origin 為空，或與 host 相同）直接放行，不加 CORS 頭
+  const host = request.headers.get("host") ?? "";
+  if (!origin || origin.includes(host)) {
+    return NextResponse.next();
+  }
+
+  // 跨域：只允許白名單來源
+  const isAllowed = allowedOrigins.includes(origin);
+  const allowOrigin = isAllowed ? origin : allowedOrigins[0];
 
   const corsHeaders: Record<string, string> = {
     "Access-Control-Allow-Origin": allowOrigin,
-    "Access-Control-Allow-Methods": "GET,POST,PUT,DELETE,OPTIONS",
-    "Access-Control-Allow-Headers": "Content-Type,X-Auth-Token",
+    "Access-Control-Allow-Methods": "GET,POST,PUT,PATCH,DELETE,OPTIONS",
+    "Access-Control-Allow-Headers": "Content-Type,X-Auth-Token,Authorization",
+    "Vary": "Origin",
   };
 
-  // Handle CORS preflight
+  // Preflight
   if (request.method === "OPTIONS") {
-    return new NextResponse(null, { status: 200, headers: corsHeaders });
+    return new NextResponse(null, { status: 204, headers: corsHeaders });
   }
 
   const response = NextResponse.next();
