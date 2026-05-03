@@ -27,6 +27,38 @@ export async function GET() {
   });
 }
 
+// 非敏感欄位更新（不需重新驗證身份證）
+export async function PATCH(req: Request) {
+  const authUser = await getAuthUser();
+  if (!authUser?.id) return NextResponse.json({ error: "未登入" }, { status: 401 });
+
+  const body = await req.json().catch(() => ({}));
+  const { displayName, bio, serviceAreas, isAvailable } = body;
+
+  if (displayName !== undefined && !displayName.trim()) {
+    return NextResponse.json({ error: "顯示名稱不可為空" }, { status: 400 });
+  }
+
+  const existing = await prisma.masterProfile.findUnique({ where: { userId: authUser.id } });
+  if (!existing) return NextResponse.json({ error: "尚未建立遊俠檔案" }, { status: 404 });
+
+  const updated = await prisma.masterProfile.update({
+    where: { userId: authUser.id },
+    data: {
+      ...(displayName  !== undefined ? { displayName: displayName.trim() } : {}),
+      ...(bio          !== undefined ? { bio: bio || null } : {}),
+      ...(serviceAreas !== undefined ? { serviceAreas: JSON.stringify(serviceAreas) } : {}),
+      ...(isAvailable  !== undefined ? { isAvailable } : {}),
+    },
+  });
+
+  return NextResponse.json({
+    ...updated,
+    nationalIdHash: undefined,
+    serviceAreas: safeParseJson(updated.serviceAreas, []),
+  });
+}
+
 export async function POST(req: Request) {
   const authUser = await getAuthUser();
   if (!authUser?.id) {

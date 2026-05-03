@@ -16,6 +16,8 @@ model User {
   email         String?  @unique
   phone         String?  @unique
   name          String?
+  emailVerified DateTime?
+  image         String?
   avatarUrl     String?
   lineId        String?  @unique
   googleId      String?  @unique

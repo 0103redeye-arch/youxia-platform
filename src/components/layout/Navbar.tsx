@@ -2,9 +2,9 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useSession, signOut } from "next-auth/react";
-import { Sword, LogOut, LayoutDashboard } from "lucide-react";
+import { Sword, LogOut, LayoutDashboard, Bell, User } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 const NAV_LINKS = [
   { href: "/jobs",      label: "找遊俠" },
@@ -16,6 +16,18 @@ export default function Navbar() {
   const pathname = usePathname();
   const { data: session, status } = useSession();
   const [menuOpen, setMenuOpen] = useState(false);
+  const [unread, setUnread] = useState(0);
+
+  // Fetch unread count when logged in
+  useEffect(() => {
+    if (!session?.user) { setUnread(0); return; }
+    fetch("/api/my/notifications")
+      .then(r => r.ok ? r.json() : [])
+      .then((data: { isRead: boolean }[]) => {
+        setUnread(Array.isArray(data) ? data.filter(n => !n.isRead).length : 0);
+      })
+      .catch(() => {});
+  }, [session, pathname]);
 
   return (
     <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-sm border-b border-slate-100">
@@ -55,44 +67,78 @@ export default function Navbar() {
           {status === "loading" ? (
             <div className="w-8 h-8 rounded-full bg-slate-100 animate-pulse hidden md:block" />
           ) : session?.user ? (
-            /* 已登入：顯示頭像 + 下拉選單 */
-            <div className="relative hidden md:block">
-              <button
-                onClick={() => setMenuOpen(v => !v)}
-                className="flex items-center gap-2 text-sm font-medium text-slate-700 hover:text-slate-900 px-2 py-1 rounded-lg hover:bg-slate-50 transition-colors"
+            <div className="hidden md:flex items-center gap-1">
+              {/* Notification bell */}
+              <Link
+                href="/notifications"
+                className="relative p-2 rounded-lg text-slate-600 hover:text-slate-900 hover:bg-slate-50 transition-colors"
               >
-                <span className="w-7 h-7 rounded-full bg-orange-100 flex items-center justify-center text-orange-700 font-bold text-sm">
-                  {session.user.name?.slice(0, 1) ?? "U"}
-                </span>
-                <span className="max-w-[80px] truncate">{session.user.name ?? "我"}</span>
-              </button>
-              {menuOpen && (
-                <>
-                  {/* 遮罩 */}
-                  <div className="fixed inset-0 z-10" onClick={() => setMenuOpen(false)} />
-                  <div className="absolute right-0 mt-1 w-44 bg-white rounded-xl shadow-lg border border-slate-100 py-1 z-20">
-                    <Link
-                      href="/dashboard"
-                      onClick={() => setMenuOpen(false)}
-                      className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50"
-                    >
-                      <LayoutDashboard className="w-4 h-4" />
-                      我的工作台
-                    </Link>
-                    <div className="my-1 border-t border-slate-100" />
-                    <button
-                      onClick={() => { setMenuOpen(false); signOut({ callbackUrl: "/" }); }}
-                      className="flex items-center gap-2.5 w-full px-4 py-2.5 text-sm text-red-600 hover:bg-red-50"
-                    >
-                      <LogOut className="w-4 h-4" />
-                      登出
-                    </button>
-                  </div>
-                </>
-              )}
+                <Bell className="w-5 h-5" />
+                {unread > 0 && (
+                  <span className="absolute top-1 right-1 w-4 h-4 bg-orange-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center">
+                    {unread > 9 ? "9+" : unread}
+                  </span>
+                )}
+              </Link>
+
+              {/* Avatar + dropdown */}
+              <div className="relative">
+                <button
+                  onClick={() => setMenuOpen(v => !v)}
+                  className="flex items-center gap-2 text-sm font-medium text-slate-700 hover:text-slate-900 px-2 py-1 rounded-lg hover:bg-slate-50 transition-colors"
+                >
+                  <span className="w-7 h-7 rounded-full bg-orange-100 flex items-center justify-center text-orange-700 font-bold text-sm">
+                    {session.user.name?.slice(0, 1) ?? "U"}
+                  </span>
+                  <span className="max-w-[80px] truncate">{session.user.name ?? "我"}</span>
+                </button>
+                {menuOpen && (
+                  <>
+                    <div className="fixed inset-0 z-10" onClick={() => setMenuOpen(false)} />
+                    <div className="absolute right-0 mt-1 w-48 bg-white rounded-xl shadow-lg border border-slate-100 py-1 z-20">
+                      <Link
+                        href="/dashboard"
+                        onClick={() => setMenuOpen(false)}
+                        className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50"
+                      >
+                        <LayoutDashboard className="w-4 h-4" />
+                        我的工作台
+                      </Link>
+                      <Link
+                        href="/profile/edit"
+                        onClick={() => setMenuOpen(false)}
+                        className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50"
+                      >
+                        <User className="w-4 h-4" />
+                        遊俠檔案
+                      </Link>
+                      <Link
+                        href="/notifications"
+                        onClick={() => setMenuOpen(false)}
+                        className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50"
+                      >
+                        <Bell className="w-4 h-4" />
+                        通知
+                        {unread > 0 && (
+                          <span className="ml-auto text-xs font-bold bg-orange-500 text-white rounded-full px-1.5 py-0.5">
+                            {unread}
+                          </span>
+                        )}
+                      </Link>
+                      <div className="my-1 border-t border-slate-100" />
+                      <button
+                        onClick={() => { setMenuOpen(false); signOut({ callbackUrl: "/" }); }}
+                        className="flex items-center gap-2.5 w-full px-4 py-2.5 text-sm text-red-600 hover:bg-red-50"
+                      >
+                        <LogOut className="w-4 h-4" />
+                        登出
+                      </button>
+                    </div>
+                  </>
+                )}
+              </div>
             </div>
           ) : (
-            /* 未登入 */
             <Link
               href="/login"
               className="hidden md:block text-sm font-medium text-slate-700 hover:text-slate-900 px-3 py-1.5 transition-colors"

@@ -99,6 +99,17 @@ export default async function JobDetailPage({ params }: { params: { id: string }
       }),
     ]);
 
+    // 通知師傅報價被接受
+    await prisma.notification.create({
+      data: {
+        userId: quote.masterId,
+        type:   "QUOTE_ACCEPTED",
+        title:  "🎉 你的報價被接受了！",
+        body:   `客戶接受了你對「${quote.job.title}」的報價 NT$${quote.price.toLocaleString()}，請前往訂單頁確認付款`,
+        data:   JSON.stringify({ orderId: order.id }),
+      },
+    }).catch(() => {});
+
     redirect(`/order/${order.id}`);
   }
 

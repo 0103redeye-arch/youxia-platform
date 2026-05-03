@@ -72,6 +72,13 @@ export async function PATCH(
     return NextResponse.json({ error: "無權限" }, { status: 403 });
   }
 
+  // helper: fire-and-forget notification
+  async function notify(userId: string, type: string, title: string, body: string) {
+    await prisma.notification.create({
+      data: { userId, type, title, body, data: JSON.stringify({ orderId: params.id }) },
+    }).catch(() => {});
+  }
+
   switch (action) {
     case "start": {
       if (!isMaster) return NextResponse.json({ error: "只有師傅可操作" }, { status: 403 });
@@ -80,6 +87,7 @@ export async function PATCH(
         where: { id: params.id },
         data: { status: "IN_PROGRESS", startedAt: new Date() },
       });
+      await notify(order.clientId, "ORDER_STARTED", "師傅已開始施工", "你的訂單正在施工中，完工後會通知你確認");
       break;
     }
     case "complete": {
@@ -92,6 +100,7 @@ export async function PATCH(
           completionPhotos: JSON.stringify(completionPhotos ?? []),
         },
       });
+      await notify(order.clientId, "ORDER_COMPLETED", "⚡ 師傅已完工，請確認", "請進入訂單確認完工，或申請複查");
       break;
     }
     case "confirm": {
@@ -115,6 +124,7 @@ export async function PATCH(
           },
         }),
       ]);
+      await notify(order.masterId, "ORDER_COMPLETED", "🎉 客戶確認完工！", "款項將於結算日撥入，感謝你的服務！");
       break;
     }
     case "dispute": {
@@ -124,6 +134,7 @@ export async function PATCH(
         where: { id: params.id },
         data: { status: "DISPUTED" },
       });
+      await notify(order.masterId, "SYSTEM", "客戶申請爭議", "客戶對完工有疑問，客服人員將與你聯繫");
       break;
     }
   }

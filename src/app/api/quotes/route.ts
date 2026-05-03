@@ -61,5 +61,17 @@ export async function POST(req: NextRequest) {
     });
   }
 
+  // 通知發案客戶
+  const master = await prisma.user.findUnique({ where: { id: user.id }, select: { name: true } });
+  await prisma.notification.create({
+    data: {
+      userId: job.clientId,
+      type:   "NEW_QUOTE",
+      title:  "你的案件收到新報價",
+      body:   `${master?.name ?? "一位遊俠"} 對「${job.title}」報價 NT$${price.toLocaleString()}`,
+      data:   JSON.stringify({ jobId }),
+    },
+  }).catch(() => {}); // 不讓通知失敗影響主流程
+
   return NextResponse.json({ id: quote.id }, { status: 201 });
 }
