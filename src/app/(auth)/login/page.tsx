@@ -3,6 +3,10 @@ import { Sword } from "lucide-react";
 import { signIn } from "@/lib/auth";
 
 export default function LoginPage() {
+  const lineEnabled = !!(
+    process.env.AUTH_LINE_CLIENT_ID && process.env.AUTH_LINE_CLIENT_SECRET
+  );
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-[#0c1220] px-6">
       <div className="w-full max-w-sm bg-white rounded-3xl shadow-xl p-8">
@@ -16,6 +20,7 @@ export default function LoginPage() {
         </div>
 
         <div className="flex flex-col gap-4">
+          {lineEnabled && (
           <form
             action={async () => {
               "use server";
@@ -32,6 +37,7 @@ export default function LoginPage() {
               用 LINE 登入
             </Button>
           </form>
+          )}
 
           <form
             action={async () => {
