@@ -72,10 +72,19 @@ export default async function OrderDetailPage({ params }: { params: { id: string
     "use server";
     const sess = await auth();
     if (!sess?.user) return;
-    await prisma.order.update({
+    const order = await prisma.order.update({
       where: { id: params.id, masterId: sess.user.id, status: "PAID" },
-      data:  { status: "IN_PROGRESS" },
+      data:  { status: "IN_PROGRESS", startedAt: new Date() },
     });
+    await prisma.notification.create({
+      data: {
+        userId: order.clientId,
+        type:   "ORDER_STARTED",
+        title:  "🔧 師傅已開始施工",
+        body:   "你的訂單正在施工中，完工後會通知你確認。",
+        data:   JSON.stringify({ orderId: params.id }),
+      },
+    }).catch(() => {});
     redirect(`/order/${params.id}`);
   }
 
@@ -83,10 +92,19 @@ export default async function OrderDetailPage({ params }: { params: { id: string
     "use server";
     const sess = await auth();
     if (!sess?.user) return;
-    await prisma.order.update({
+    const order = await prisma.order.update({
       where: { id: params.id, masterId: sess.user.id, status: "IN_PROGRESS" },
-      data:  { status: "PENDING_CONFIRM", completedAt: new Date() },
+      data:  { status: "PENDING_CONFIRM" },  // completedAt set on actual COMPLETED
     });
+    await prisma.notification.create({
+      data: {
+        userId: order.clientId,
+        type:   "ORDER_COMPLETED",
+        title:  "⚡ 師傅已完工，請確認",
+        body:   "請進入訂單確認完工，或申請複查。",
+        data:   JSON.stringify({ orderId: params.id }),
+      },
+    }).catch(() => {});
     redirect(`/order/${params.id}`);
   }
 
@@ -96,13 +114,27 @@ export default async function OrderDetailPage({ params }: { params: { id: string
     if (!sess?.user) return;
     const updated = await prisma.order.update({
       where: { id: params.id, clientId: sess.user.id, status: "PENDING_CONFIRM" },
-      data:  { status: "COMPLETED" },
+      data:  { status: "COMPLETED", clientConfirmed: true, completedAt: new Date() },
     });
-    // Increment master's order counts
-    await prisma.masterProfile.updateMany({
-      where: { userId: updated.masterId },
-      data:  { totalOrders: { increment: 1 }, monthlyOrders: { increment: 1 } },
-    });
+    await prisma.$transaction([
+      prisma.job.update({
+        where: { id: updated.jobId },
+        data:  { status: "COMPLETED" },
+      }),
+      prisma.masterProfile.updateMany({
+        where: { userId: updated.masterId },
+        data:  { totalOrders: { increment: 1 }, monthlyOrders: { increment: 1 } },
+      }),
+    ]);
+    await prisma.notification.create({
+      data: {
+        userId: updated.masterId,
+        type:   "ORDER_COMPLETED",
+        title:  "🎉 客戶確認完工！",
+        body:   "款項將於結算日撥入，感謝你的服務！",
+        data:   JSON.stringify({ orderId: params.id }),
+      },
+    }).catch(() => {});
     redirect(`/order/${params.id}`);
   }
 
@@ -110,10 +142,19 @@ export default async function OrderDetailPage({ params }: { params: { id: string
     "use server";
     const sess = await auth();
     if (!sess?.user) return;
-    await prisma.order.update({
+    const order = await prisma.order.update({
       where: { id: params.id, clientId: sess.user.id, status: "PENDING_CONFIRM" },
       data:  { status: "DISPUTED" },
     });
+    await prisma.notification.create({
+      data: {
+        userId: order.masterId,
+        type:   "SYSTEM",
+        title:  "客戶申請爭議",
+        body:   "客戶對完工有疑問，客服人員將與你聯繫。",
+        data:   JSON.stringify({ orderId: params.id }),
+      },
+    }).catch(() => {});
     redirect(`/order/${params.id}`);
   }
 

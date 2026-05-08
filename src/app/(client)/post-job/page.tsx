@@ -41,31 +41,46 @@ function PostJobInner() {
     budgetMin: "", budgetMax: "", preferredDate: "",
   });
   const [loading, setLoading] = useState(false);
+  const [submitError, setSubmitError] = useState("");
 
   const districts = DISTRICTS[form.city] ?? [];
 
   async function submitJob() {
     if (!selectedIssue) return;
     setLoading(true);
-    const res = await fetch("/api/jobs", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        issueId: selectedIssue.id,
-        title: selectedIssue.label,
-        description: form.description,
-        city: form.city,
-        district: form.district,
-        address: form.address,
-        budgetMin: form.budgetMin ? Number(form.budgetMin) : null,
-        budgetMax: form.budgetMax ? Number(form.budgetMax) : null,
-        preferredDate: form.preferredDate || null,
-        jobType: selectedIssue.requiresLicense ? "LICENSED" : "OPEN",
-      }),
-    });
-    setLoading(false);
-    if (res.ok) setStep("done");
-    else alert("發案失敗，請確認已登入");
+    setSubmitError("");
+    try {
+      const res = await fetch("/api/jobs", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          issueId: selectedIssue.id,
+          title: selectedIssue.label,
+          description: form.description,
+          city: form.city,
+          district: form.district,
+          address: form.address,
+          budgetMin: form.budgetMin ? Number(form.budgetMin) : null,
+          budgetMax: form.budgetMax ? Number(form.budgetMax) : null,
+          preferredDate: form.preferredDate || null,
+          jobType: selectedIssue.requiresLicense ? "LICENSED" : "OPEN",
+        }),
+      });
+      if (res.ok) {
+        setStep("done");
+      } else {
+        const data = await res.json().catch(() => ({}));
+        if (res.status === 401) {
+          setSubmitError("請先登入才能發案");
+        } else {
+          setSubmitError(data.error ?? "發案失敗，請稍後再試");
+        }
+      }
+    } catch {
+      setSubmitError("網路錯誤，請稍後再試");
+    } finally {
+      setLoading(false);
+    }
   }
 
   const STEP_LABELS: Record<string, string> = {
@@ -280,6 +295,11 @@ function PostJobInner() {
                 ※ 完整地址在成交後才會提供給遊俠，報價前僅顯示行政區
               </p>
 
+              {submitError && (
+                <p className="text-sm text-red-600 bg-red-50 rounded-xl px-4 py-3 mb-1">
+                  {submitError}
+                </p>
+              )}
               <Button
                 className="w-full h-12 text-base font-semibold rounded-xl"
                 size="lg"
